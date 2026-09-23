@@ -1,10 +1,20 @@
 # Claude Fluency for MMC Global Scholars
 ### A 4-module curriculum for junior engineers adopting Claude into their workflow
 
-**Who this is for:** MMC's global scholars — junior engineers, new to
-Claude Code, spread across timezones. No prior agent or LLM tooling
-experience assumed. Standalone: you don't need to have taken any other
-MMC training first.
+**Who this is for:** MMC's Google Cloud scholar cohort — junior
+engineers, new to Claude Code, spread across timezones. No prior agent or
+LLM tooling experience assumed. Standalone: you don't need to have taken
+any other MMC training first.
+
+**Where this sits in the track:** this is Part 1. Scholars who complete
+it progress to a follow-on course combining Claude with Google Cloud
+directly — the two-lane structure mirrors how
+[AI Fluency for Teachers](https://github.com/itsChanelML/teacher-ai-adoption)
+positions itself alongside Anthropic's own educator courses: this course
+answers "how do I adopt Claude into my own workflow," and Part 2 answers
+"how do I use Claude together with the Google Cloud stack I'm already
+learning." Part 2 isn't built yet — this repo is the foundation it
+builds on.
 
 By the end, every scholar has Claude Code fully set up and has personally
 built a Global Instruction, a Skill, a connected MCP server, a Command,
@@ -32,9 +42,23 @@ every tier — not a menu of features, a progression.
 
 ---
 
-**[Slide deck](https://claude.ai/artifact/GpfXiC2JKeVxJGf6VdtT2J)** — the
-4D's, the Automation/Augmentation/Agents roadmap, and a one-slide preview
-of all four modules.
+## Materials
+
+- **[Slide deck](https://claude.ai/artifact/GpfXiC2JKeVxJGf6VdtT2J)** — the
+  4D's, the roadmap, and a one-slide preview of all four modules
+- **[Engineer Walkthrough](https://claude.ai/artifact/3JxT7RJphGv7cLJo6szvqp)** —
+  the interactive version scholars actually work through: checklists per
+  exercise, reflection prompts, progress that persists per scholar
+  automatically (via the artifact platform's real per-viewer identity —
+  no name-entry gate, no shared-name privacy compromise), and a capstone
+  that exports a real `MY_SETUP.md`
+- **[Facilitator Console](https://claude.ai/artifact/C6cBZ6bp95wtiC4nGzFVbH)** —
+  a live-delivery tool, distinct from the slides: per-module timing bars,
+  what usually goes smoothly, what to watch for, discussion prompts, and
+  a pre-session checklist (including the Module 3 MCP-syntax verification
+  step) — this is what's open on the facilitator's own screen while the
+  slides run for the room
+- The raw module files below, for reading or adapting outside either UI
 
 ## The four modules
 

@@ -1,0 +1,330 @@
+<title>Claude Fluency Facilitator Console</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:          #F5F2EA;
+    --surface:     #FFFFFF;
+    --surface-2:   #ECE6D8;
+    --text:        #1C1E22;
+    --text-dim:    #5B6472;
+    --border:      #DCD3BE;
+    --accent:      #0E8C7F;
+    --accent-ink:  #FFFFFF;
+    --accent-soft: #D8EFE9;
+    --warn:        #B5790A;
+    --warn-soft:   #F3E4C7;
+    --escalate:    #C23B4B;
+    --shadow: 0 1px 2px rgba(28,30,34,.06), 0 8px 24px rgba(28,30,34,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#11151C; --surface:#1B212B; --surface-2:#222939; --text:#EDEAE3; --text-dim:#8B93A1;
+      --border:#2B3342; --accent:#56E0C9; --accent-ink:#08201C; --accent-soft:#123B37;
+      --warn:#E0AC52; --warn-soft:#3A2E17; --escalate:#FB7185;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#11151C; --surface:#1B212B; --surface-2:#222939; --text:#EDEAE3; --text-dim:#8B93A1;
+    --border:#2B3342; --accent:#56E0C9; --accent-ink:#08201C; --accent-soft:#123B37;
+    --warn:#E0AC52; --warn-soft:#3A2E17; --escalate:#FB7185;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif; padding:0 16px; }
+  .mono { font-family:"IBM Plex Mono",ui-monospace,monospace; }
+  h1,h2,h3 { text-wrap:balance; margin:0; }
+  button { font-family:inherit; cursor:pointer; }
+  code { font-family:"IBM Plex Mono",monospace; background:var(--surface-2); padding:.1em .4em; border-radius:5px; font-size:.9em; }
+
+  #shell { max-width:1040px; margin:0 auto; padding-block:clamp(20px,4vw,40px); display:flex; flex-direction:column; gap:20px; }
+
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .brand .kicker { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); }
+  .brand .title { font-weight:700; font-size:16px; }
+
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; }
+  .tab { background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:7px 14px; font-size:12.5px; font-family:"IBM Plex Mono",monospace; color:var(--text-dim); }
+  .tab.current { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .tab:hover:not(.current) { border-color:var(--accent); color:var(--accent); }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:clamp(18px,3vw,32px); display:flex; flex-direction:column; gap:22px; }
+  .panel-eyebrow { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+  .panel-title { font-size:clamp(21px,2.8vw,28px); font-weight:700; }
+  .panel-meta { font-size:12.5px; color:var(--text-dim); }
+
+  section.block { display:flex; flex-direction:column; gap:10px; }
+  section.block h3 { font-size:15px; display:flex; align-items:center; gap:8px; }
+  .prose { font-size:14px; line-height:1.6; }
+  .prose.dim { color:var(--text-dim); }
+
+  /* timing bar */
+  .timeline { display:flex; height:34px; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+  .timeline .seg { display:flex; align-items:center; justify-content:center; font-size:11px; font-family:"IBM Plex Mono",monospace; color:var(--accent-ink); background:var(--accent); border-right:1px solid var(--surface); white-space:nowrap; overflow:hidden; padding:0 4px; }
+  .timeline .seg:nth-child(even) { filter:brightness(1.18); }
+  .timeline .seg:last-child { border-right:none; }
+  .seg-legend { display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:var(--text-dim); }
+  .seg-legend b { color:var(--text); font-family:"IBM Plex Mono",monospace; }
+
+  .callout { border-radius:10px; padding:13px 15px; font-size:13.5px; line-height:1.6; border:1px solid; }
+  .callout.warn { background:var(--warn-soft); border-color:var(--warn); }
+  .callout.info { background:var(--surface-2); border-color:var(--border); }
+  .callout.danger { background:color-mix(in srgb, var(--escalate) 12%, var(--surface)); border-color:var(--escalate); }
+  .callout b { color:inherit; }
+
+  .checklist { display:flex; flex-direction:column; gap:8px; }
+  .check-item { display:flex; align-items:flex-start; gap:10px; padding:9px 12px; border:1px solid var(--border); border-radius:9px; background:var(--bg); cursor:pointer; }
+  .check-item.done { border-color:var(--accent); background:var(--accent-soft); }
+  .check-box { margin-top:2px; width:16px; height:16px; flex-shrink:0; border:1.5px solid var(--border); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:11px; }
+  .check-item.done .check-box { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .check-item.done span.label { text-decoration:line-through; color:var(--text-dim); }
+  .check-item span.label { font-size:13.5px; line-height:1.5; }
+
+  .refgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:680px) { .refgrid { grid-template-columns:1fr; } }
+  .refcard { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .refcard .tag { font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.04em; }
+  .refcard p { margin:4px 0 0; font-size:13px; color:var(--text-dim); line-height:1.5; }
+
+  .copybox { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; font-size:13px; line-height:1.6; white-space:pre-wrap; position:relative; }
+  .copybtn { position:absolute; top:8px; right:8px; font-size:11px; font-family:"IBM Plex Mono",monospace; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-dim); }
+  .copybtn:hover { border-color:var(--accent); color:var(--accent); }
+
+  footer.pagefoot { text-align:center; font-size:12px; color:var(--text-dim); padding-block:20px 8px; }
+</style>
+
+<div id="shell"></div>
+<footer class="pagefoot">Claude Fluency for Scholars · Facilitator Console</footer>
+
+<script>
+(function(){
+
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ── Content ───────────────────────────────────────────────────────────────
+
+const SETUP_EMAIL = `Before our first session:
+1. Install Claude Code and confirm \`claude --version\` works.
+2. Set up (or confirm) your Claude account.
+3. Have Python 3.9+ and git available.
+
+Come 10 minutes early if any of this doesn't work — we'll fix it before
+we start Module 1's content.`;
+
+const PANELS = [
+  { key:"overview", kind:"overview", label:"Overview" },
+  { key:"m1", kind:"module", num:1, title:"Foundations & Setup", timing:"~60 min",
+    segments:[["15 min","4D's + roadmap"],["20 min","Setup"],["25 min","Global Instruction exercise"]],
+    smooth:"The 4D table and the Automation/Augmentation/Agents mapping — most people find the \"as an engineer you'd see this as...\" examples immediately recognizable.",
+    watchFor:"Someone writing a Global Instruction so broad it's really just \"be a good assistant\" restated. Push for specificity: \"what's one thing that actually annoyed you about a generic AI tool before today?\" usually surfaces something real.",
+    discussion:"\"Which of the 4D's do you think matters most for your current project, not in general?\" — good if the room is ahead of schedule.",
+    checkpoints:["pytest → 9 passed on setup","One concrete, nameable behavior change from the Global Instruction"]},
+  { key:"m2", kind:"module", num:2, title:"Skills & CLAUDE.md", timing:"~75 min",
+    segments:[["10 min","Skills vs. Global Instructions"],["35 min","Build the Skill"],["20 min","CLAUDE.md"],["10 min","Buffer / discussion"]],
+    smooth:"Directing Claude Code to build the Skill — most people get something usable on the first real attempt.",
+    watchFor:"Accepting the first check-in draft without reading it as a mentor actually would. Walk the room and ask \"would you actually send this?\" not \"did it work?\" A CLAUDE.md that just restates what's obvious from the code, rather than a real convention someone would otherwise forget — ask \"what did you have to re-explain to Claude Code today that you shouldn't have had to?\"",
+    discussion:"Compare two scholars' Skill outputs side by side — same task, different tone choices. What made one feel more trustworthy?",
+    checkpoints:["Two differently-toned check-in drafts (stalled vs. on-track scholar)","A CLAUDE.md a fresh session visibly follows"]},
+  { key:"m3", kind:"module", num:3, title:"Leveraging MCPs", timing:"~75 min",
+    segments:[["10 min","What MCP is"],["25 min","Connect a server"],["25 min","Real task"],["15 min","Judgment boundary discussion"]],
+    smooth:"The conceptual framing (\"MCP is how Claude reaches outside your repo\") — this usually lands quickly once stated plainly.",
+    watchFor:"This is the module most likely to run into environment friction — auth flows, account setup, network restrictions on shared wifi. Budget slack, and have a backup (e.g. a screen-share demo) if more than a couple of scholars can't connect live.",
+    discussion:"\"What's the MCP-connected equivalent of the teacher course's at-risk monitor being advisory-only?\" — a good bridge if any scholars have also seen that material.",
+    checkpoints:["At least one new MCP tool Claude Code can name","A named, specific judgment boundary from the Part D discussion"],
+    danger:"Don't skip the judgment-boundary discussion to save time. It's tempting to end this module once the technical connection works, but Diligence is what this module is FOR — if you're short on time, cut from the task-exploration part before you cut this discussion."},
+  { key:"m4", kind:"module", num:4, title:"Plugins, Commands & Capstone", timing:"~75 min",
+    segments:[["20 min","Commands"],["25 min","Plugins"],["30 min","Capstone MY_SETUP.md"]],
+    smooth:"Turning the Module 2 Skill into a Command — mechanically simple once Skills are already understood.",
+    watchFor:"A Plugin manifest that lists what's included but never explicitly names what's excluded. Push directly: \"if I installed your Plugin, what would I be trusting you did NOT put in it?\" should have a specific answer.",
+    discussion:"Have a few scholars read their \"which D am I weakest on\" reflection out loud, if the group is comfortable — normalizes that nobody left the workshop expert at all four.",
+    checkpoints:["A working /checkin Command","A Plugin manifest with an explicit exclusions line","A MY_SETUP.md with a real review trigger, not \"periodically\""]},
+  { key:"quickref", kind:"quickref", label:"Quick Reference" },
+];
+
+const PRESESSION_CHECKLIST = [
+  "Sent the pre-Module-1 setup email at least 3 days ahead",
+  "Confirmed `claude --version` and `pytest` → 9 passed myself, on a fresh clone",
+  "Read all four module files end to end",
+  "Worked through Modules 2–4 myself at least once",
+];
+
+const MODULE3_CHECKLIST = [
+  "Verified the current `claude mcp add` syntax against Anthropic's docs (it drifts — don't trust a fixed command)",
+  "Confirmed which MCP server I'm demonstrating and that it's realistic for the room to connect live",
+  "Confirmed whether scholars need an account/token set up in advance (e.g. GitHub) — and told them, in the pre-session email for this module specifically",
+];
+
+// ── State (facilitator's own device only — no shared/db state needed) ─────
+
+let currentPanel = "overview";
+let checks = { presession: PRESESSION_CHECKLIST.map(()=>false), m3: MODULE3_CHECKLIST.map(()=>false) };
+
+try {
+  const saved = localStorage.getItem("facilitator_console_checks");
+  if (saved) checks = Object.assign(checks, JSON.parse(saved));
+} catch(e) {}
+
+function saveChecks() {
+  try { localStorage.setItem("facilitator_console_checks", JSON.stringify(checks)); } catch(e) {}
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────
+
+function renderShell() {
+  const shell = document.getElementById("shell");
+  shell.innerHTML = renderTopbar() + renderPanel();
+  attachHandlers();
+}
+
+function renderTopbar() {
+  const tabs = PANELS.map(p => {
+    const label = p.kind === "module" ? "M" + p.num : p.label;
+    return `<button class="tab ${p.key===currentPanel?'current':''} mono" data-panel="${p.key}">${esc(label)}</button>`;
+  }).join("");
+  return `<div class="topbar">
+    <div class="brand"><span style="font-size:1.3em">🎛️</span><div><div class="kicker">Claude Fluency for Scholars</div><div class="title">Facilitator Console</div></div></div>
+  </div>
+  <div class="tabs">${tabs}</div>`;
+}
+
+function renderPanel() {
+  const p = PANELS.find(x => x.key === currentPanel);
+  if (p.kind === "overview") return renderOverview();
+  if (p.kind === "quickref") return renderQuickref();
+  return renderModule(p);
+}
+
+function renderOverview() {
+  const items = PRESESSION_CHECKLIST.map((label, idx) => checkItemHtml("presession", idx, label, checks.presession[idx])).join("");
+  return `<div class="card">
+    <div><div class="panel-eyebrow">Before Module 1</div><div class="panel-title">Overview</div></div>
+
+    <section class="block">
+      <h3>At a glance</h3>
+      <div class="refgrid">
+        <div class="refcard"><span class="tag">Audience</span><p>Junior engineers — MMC's global scholars. No prior Claude Code experience assumed.</p></div>
+        <div class="refcard"><span class="tag">Format</span><p>4 sessions, ~60–75 min each, hands-on.</p></div>
+        <div class="refcard"><span class="tag">Timezone note</span><p>"Global" means real spread — consider running each module twice rather than one synchronous session everyone strains to attend.</p></div>
+        <div class="refcard"><span class="tag">The one thing to land</span><p>Approving a diff you can't explain back in one sentence is the same mistake whether a person or Claude Code wrote it.</p></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h3>Pre-session setup email</h3>
+      <div class="copybox mono" id="emailBox">${esc(SETUP_EMAIL)}<button class="copybtn" id="copyEmail">Copy</button></div>
+    </section>
+
+    <section class="block">
+      <h3>Facilitator pre-flight checklist</h3>
+      <div class="checklist">${items}</div>
+    </section>
+  </div>`;
+}
+
+function checkItemHtml(group, idx, label, done) {
+  return `<div class="check-item ${done?'done':''}" data-check="${group}.${idx}" role="checkbox" aria-checked="${done?'true':'false'}" tabindex="0">
+    <span class="check-box">${done?'✓':''}</span><span class="label">${esc(label)}</span>
+  </div>`;
+}
+
+function renderModule(p) {
+  const segs = p.segments.map(([time,label], i) => `<div class="seg" style="flex:${parseInt(time)}" title="${esc(time)} — ${esc(label)}">${esc(time)}</div>`).join("");
+  const legend = p.segments.map(([time,label]) => `<span><b>${esc(time)}</b> ${esc(label)}</span>`).join("");
+  const checkpoints = p.checkpoints.map(c => `<li>${esc(c)}</li>`).join("");
+
+  let extra = "";
+  if (p.danger) {
+    extra += `<div class="callout danger"><b>Don't cut this:</b> ${esc(p.danger)}</div>`;
+  }
+  if (p.key === "m3") {
+    const items = MODULE3_CHECKLIST.map((label, idx) => checkItemHtml("m3", idx, label, checks.m3[idx])).join("");
+    extra += `<section class="block"><h3>⚠️ Verify before this session</h3><div class="checklist">${items}</div></section>`;
+  }
+
+  return `<div class="card">
+    <div>
+      <div class="panel-eyebrow">Module ${p.num} · ${esc(p.timing)}</div>
+      <div class="panel-title">${esc(p.title)}</div>
+    </div>
+
+    <section class="block">
+      <h3>Timing</h3>
+      <div class="timeline mono">${segs}</div>
+      <div class="seg-legend">${legend}</div>
+    </section>
+
+    ${extra}
+
+    <section class="block">
+      <h3>✅ What usually goes smoothly</h3>
+      <p class="prose">${esc(p.smooth)}</p>
+    </section>
+
+    <section class="block">
+      <h3>👀 What to watch for</h3>
+      <p class="prose">${esc(p.watchFor)}</p>
+    </section>
+
+    <section class="block">
+      <h3>💬 Discussion prompt</h3>
+      <p class="prose dim">${esc(p.discussion)}</p>
+    </section>
+
+    <section class="block">
+      <h3>Checkpoint — what "done" looks like</h3>
+      <ul class="prose">${checkpoints}</ul>
+    </section>
+  </div>`;
+}
+
+function renderQuickref() {
+  const rows = PANELS.filter(p => p.kind === "module").map(p => `
+    <div class="refcard"><span class="tag">Module ${p.num} — ${esc(p.title)}</span>
+      <p>${p.checkpoints.map(esc).join(" · ")}</p>
+    </div>`).join("");
+  return `<div class="card">
+    <div><div class="panel-eyebrow">Reference</div><div class="panel-title">Quick Reference — "done" per module</div></div>
+    <div class="refgrid">${rows}</div>
+    <div class="callout info">Use this to spot-check a room full of screens without re-reading the full module file mid-session.</div>
+  </div>`;
+}
+
+// ── Handlers ──────────────────────────────────────────────────────────────
+
+function attachHandlers() {
+  document.querySelectorAll("[data-panel]").forEach(btn => {
+    btn.addEventListener("click", () => { currentPanel = btn.getAttribute("data-panel"); renderShell(); });
+  });
+  const card = document.querySelector(".card");
+  if (card) {
+    const toggle = (el) => {
+      const [group, idx] = el.getAttribute("data-check").split(".");
+      checks[group][idx] = !checks[group][idx];
+      saveChecks();
+      renderShell();
+    };
+    card.addEventListener("click", e => {
+      const checkEl = e.target.closest("[data-check]");
+      if (checkEl) { toggle(checkEl); return; }
+      if (e.target.id === "copyEmail") {
+        navigator.clipboard?.writeText(SETUP_EMAIL).then(() => {
+          e.target.textContent = "Copied";
+          setTimeout(() => { e.target.textContent = "Copy"; }, 1500);
+        }).catch(()=>{});
+      }
+    });
+    card.addEventListener("keydown", e => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const checkEl = e.target.closest("[data-check]");
+      if (checkEl) { e.preventDefault(); toggle(checkEl); }
+    });
+  }
+}
+
+renderShell();
+
+})();
+</script>

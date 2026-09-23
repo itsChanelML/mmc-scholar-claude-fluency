@@ -1,0 +1,505 @@
+<title>Claude Fluency Walkthrough</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:          #F5F2EA;
+    --surface:     #FFFFFF;
+    --surface-2:   #ECE6D8;
+    --text:        #1C1E22;
+    --text-dim:    #5B6472;
+    --border:      #DCD3BE;
+    --accent:      #0E8C7F;
+    --accent-ink:  #FFFFFF;
+    --accent-soft: #D8EFE9;
+    --success:     #1F9D55;
+    --retry:       #B5790A;
+    --escalate:    #C23B4B;
+    --shadow: 0 1px 2px rgba(28,30,34,.06), 0 8px 24px rgba(28,30,34,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#11151C; --surface:#1B212B; --surface-2:#222939; --text:#EDEAE3; --text-dim:#8B93A1;
+      --border:#2B3342; --accent:#56E0C9; --accent-ink:#08201C; --accent-soft:#123B37;
+      --success:#6EE7A8; --retry:#FBBF6B; --escalate:#FB7185;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#11151C; --surface:#1B212B; --surface-2:#222939; --text:#EDEAE3; --text-dim:#8B93A1;
+    --border:#2B3342; --accent:#56E0C9; --accent-ink:#08201C; --accent-soft:#123B37;
+    --success:#6EE7A8; --retry:#FBBF6B; --escalate:#FB7185;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif; padding:0 16px; }
+  .mono { font-family:"IBM Plex Mono",ui-monospace,monospace; }
+  h1,h2,h3 { text-wrap:balance; margin:0; }
+  button { font-family:inherit; cursor:pointer; }
+  code { font-family:"IBM Plex Mono",monospace; background:var(--surface-2); padding:.1em .4em; border-radius:5px; font-size:.9em; }
+
+  #shell { max-width: 980px; margin:0 auto; padding-block: clamp(20px,4vw,40px); display:flex; flex-direction:column; gap:20px; }
+
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .brand .kicker { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); }
+  .brand .title { font-weight:700; font-size:16px; }
+  .who { font-size:12.5px; color:var(--text-dim); display:flex; align-items:center; gap:8px; }
+  .avatar { width:24px; height:24px; border-radius:50%; }
+
+  .rail { display:flex; gap:6px; }
+  .rail-step { flex:1; height:6px; border-radius:3px; background:var(--surface-2); border:none; padding:0; cursor:pointer; position:relative; }
+  .rail-step.current { outline:2px solid var(--accent-soft); outline-offset:2px; }
+  .rail-fill { height:100%; border-radius:3px; background:var(--accent); }
+
+  .modlabels { display:flex; gap:6px; font-size:11px; color:var(--text-dim); }
+  .modlabels span { flex:1; text-align:center; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:clamp(18px,3vw,32px); display:flex; flex-direction:column; gap:22px; }
+  .mod-eyebrow { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+  .mod-title { font-size:clamp(21px,2.8vw,28px); font-weight:700; }
+  .mod-meta { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--text-dim); }
+  .mod-meta b { color:var(--text); }
+
+  section.block { display:flex; flex-direction:column; gap:12px; }
+  section.block h3 { font-size:16px; }
+  .prose { font-size:14.5px; line-height:1.6; color:var(--text); }
+  .prose.dim { color:var(--text-dim); }
+
+  table.dtable { border-collapse:collapse; width:100%; }
+  table.dtable td { padding:9px 10px; border-bottom:1px solid var(--border); font-size:13.5px; vertical-align:top; }
+  table.dtable td:first-child { font-family:"IBM Plex Mono",monospace; color:var(--accent); font-weight:600; width:110px; }
+
+  .roadmap-row { display:grid; grid-template-columns:120px 1fr auto; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .roadmap-row:last-child { border-bottom:none; }
+  .roadmap-tier { font-family:"IBM Plex Mono",monospace; font-weight:600; }
+  .roadmap-row .feat { font-family:"IBM Plex Mono",monospace; color:var(--accent); white-space:nowrap; }
+
+  .checklist { display:flex; flex-direction:column; gap:8px; }
+  .check-item { display:flex; align-items:flex-start; gap:10px; padding:9px 12px; border:1px solid var(--border); border-radius:9px; background:var(--bg); cursor:pointer; }
+  .check-item.done { border-color:var(--accent); background:var(--accent-soft); }
+  .check-box { margin-top:2px; width:16px; height:16px; flex-shrink:0; border:1.5px solid var(--border); border-radius:4px; display:flex; align-items:center; justify-content:center; }
+  .check-item.done .check-box { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-size:11px; }
+  .check-item span.label { font-size:13.5px; line-height:1.5; }
+  .check-item.done span.label { text-decoration: line-through; color: var(--text-dim); }
+
+  .field-group { display:flex; flex-direction:column; gap:6px; }
+  .field-label { font-size:13.5px; font-weight:600; }
+  .field-hint { font-size:12px; color:var(--text-dim); margin-top:-2px; }
+  textarea, input[type=text] { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:13.5px; line-height:1.5; font-family:inherit; }
+  textarea { resize:vertical; min-height:60px; }
+  textarea:focus, input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+
+  .callout { border-radius:10px; padding:12px 14px; font-size:13px; line-height:1.55; border:1px solid; }
+  .callout.warn { background:color-mix(in srgb, var(--retry) 12%, var(--surface)); border-color:var(--retry); }
+  .callout.info { background:var(--surface-2); border-color:var(--border); }
+
+  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding-top:6px; border-top:1px solid var(--border); }
+  .btn { border-radius:9px; padding:10px 18px; font-size:14px; font-weight:600; border:1px solid transparent; }
+  .btn-primary { background:var(--accent); color:var(--accent-ink); }
+  .btn-ghost { background:none; border:1px solid var(--border); color:var(--text); }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .save-state { font-size:12px; color:var(--text-dim); margin-left:auto; }
+
+  .stepnav { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text-dim); }
+  .stepnav button { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:13px; color:var(--text); }
+  .stepnav button:disabled { opacity:.35; }
+  .stepnav button:not(:disabled):hover { border-color:var(--accent); }
+
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:640px) { .grid2 { grid-template-columns:1fr; } }
+  .dcard { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .dcard .tag { font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.04em; }
+  .dcard p { margin:4px 0 0; font-size:13px; color:var(--text-dim); line-height:1.5; }
+
+  .preview { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; font-size:12.5px; line-height:1.6; white-space:pre-wrap; max-height:280px; overflow-y:auto; }
+
+  footer.pagefoot { text-align:center; font-size:12px; color:var(--text-dim); padding-block:20px 8px; }
+</style>
+
+<div id="shell"></div>
+<footer class="pagefoot">Claude Fluency for Scholars · Mentor Me Collective</footer>
+
+<script>
+(function(){
+
+// ── Content ───────────────────────────────────────────────────────────────
+
+const D4_TABLE = `<table class="dtable">
+  <tr><td>Delegation</td><td class="prose">What am I handing off, and what am I keeping control of?</td></tr>
+  <tr><td>Description</td><td class="prose">Have I given Claude enough real context to succeed?</td></tr>
+  <tr><td>Discernment</td><td class="prose">Do I actually believe this output is correct?</td></tr>
+  <tr><td>Diligence</td><td class="prose">Am I accountable for what happens next?</td></tr>
+</table>`;
+
+const ROADMAP = `
+  <div class="roadmap-row"><div class="roadmap-tier">AUTOMATION</div><div class="prose dim">Same steps, every time, zero judgment — a deploy script, a lint check you run identically every week.</div><div class="feat">→ Commands</div></div>
+  <div class="roadmap-row"><div class="roadmap-tier">AUGMENTATION</div><div class="prose dim">You're still driving — pasting a stack trace and asking what's wrong.</div><div class="feat">→ Global Instructions</div></div>
+  <div class="roadmap-row"><div class="roadmap-tier">AGENTS</div><div class="prose dim">"Here's a ticket, go implement it" — Claude plans and executes, checking in at boundaries.</div><div class="feat">→ Skills + MCP</div></div>`;
+
+const MODULES = [
+  { key:"m1", num:1, title:"Foundations & Setup", format:"~60 min", ds:"Description",
+    sections: [
+      { type:"html", title:"The 4D Framework", html: D4_TABLE + `<p class="prose dim" style="margin-top:8px">Anthropic's framework for AI collaboration. Every module below names which D it's mostly exercising.</p>` },
+      { type:"html", title:"Automation → Augmentation → Agents", html: ROADMAP },
+      { type:"checklist", key:"setup", title:"Get set up",
+        items:[
+          "Installed Claude Code and confirmed `claude --version` works",
+          "Authenticated with my Claude account",
+          "Cloned this repo and ran `pip3 install -r requirements.txt`",
+          "Ran `python3 -m pytest` and saw 9 passed",
+          "Opened Claude Code in this repo and asked it to explain roster.py",
+        ]},
+      { type:"reflection", key:"global_instruction", title:"Your first Global Instruction",
+        hint:"What 2–3 things did you make always-true, and what changed?",
+        placeholder:"e.g. Always explain your plan in one line before acting. I noticed Claude Code started narrating..." },
+    ]},
+
+  { key:"m2", num:2, title:"Skills & CLAUDE.md", format:"~75 min", ds:"Delegation, Discernment",
+    sections: [
+      { type:"html", title:"Skills vs. Global Instructions", html:
+        `<p class="prose">A Global Instruction applies to <i>everything, always</i>. A <b>Skill</b> activates automatically only when Claude recognizes the specific kind of task it's for. If you're unsure which one a task needs, ask: "would I want this rule active while I'm asking about something completely different?" — no → Skill; yes → Global Instruction.</p>` },
+      { type:"checklist", key:"skill_build", title:"Build the mentor check-in Skill",
+        items:[
+          "Directed Claude Code to build the Skill (didn't hand-write it myself)",
+          "Tried it on a stalled scholar (s004, Noah Kim)",
+          "Tried it on an on-track scholar (s009, Renee Park)",
+          "Read both drafts like a mentor would — not just checked that it ran",
+        ]},
+      { type:"reflection", key:"skill_reflection", title:"Discernment check",
+        hint:"Would you actually send either draft as written? What would you change?",
+        placeholder:"" },
+      { type:"checklist", key:"claude_md", title:"Write your repo's CLAUDE.md",
+        items:[
+          "Drafted CLAUDE.md with 3–4 real conventions",
+          "Started a fresh Claude Code session and asked for an unrelated change",
+          "Confirmed it followed at least one convention without being told again",
+        ]},
+    ]},
+
+  { key:"m3", num:3, title:"Leveraging MCPs", format:"~75 min", ds:"Diligence, Delegation",
+    sections: [
+      { type:"html", title:"What MCP actually is", html:
+        `<p class="prose">Claude Code already reads your files, runs bash, and uses git natively. <b>MCP</b> is how Claude reaches <i>outside</i> that — a real external system exposed as tools it can call. Connecting one grants access, which is why this module leads with Diligence before the mechanics.</p>
+        <div class="callout warn" style="margin-top:6px">The exact commands for adding an MCP server change as Claude Code evolves — confirm the current syntax with your facilitator rather than trusting a fixed command here.</div>` },
+      { type:"checklist", key:"mcp_connect", title:"Connect a real MCP server",
+        items:[
+          "Ran `claude mcp list` to see what's currently connected",
+          "Added the GitHub MCP server (or another your facilitator points you to)",
+          "Confirmed Claude Code can name a new tool it now has access to",
+        ]},
+      { type:"checklist", key:"mcp_task", title:"Use it on a real task",
+        items:[
+          "Picked a public repo I'm comfortable exploring",
+          "Asked Claude to find and summarize 2–3 'good first issue' items",
+          "Read the summary critically — checked it against the actual issue",
+        ]},
+      { type:"reflection", key:"judgment_boundary", title:"The judgment boundary",
+        hint:"What would this MCP connection do that you would NOT want it doing without your review first? Be specific.",
+        placeholder:"e.g. I would not want it commenting on an issue or closing a PR without me reading the exact text first, because..." },
+    ]},
+
+  { key:"m4", num:4, title:"Plugins, Commands & Capstone", format:"~75 min", ds:"Diligence",
+    sections: [
+      { type:"checklist", key:"command_build", title:"Turn your Skill into a Command",
+        items:[
+          "Built a /checkin (or similar) Command from the Module 2 Skill",
+          "Ran it against 2–3 scholar IDs",
+        ]},
+      { type:"checklist", key:"plugin_build", title:"Bundle a Plugin",
+        items:[
+          "Bundled the Skill + Command into a Plugin",
+          "Checked for anything that needed genericizing before sharing",
+          "Wrote a manifest naming what's included AND explicitly excluded",
+        ]},
+      { type:"capstone", key:"capstone", title:"Capstone — My Claude Code Setup" },
+    ]},
+];
+
+// ── State ─────────────────────────────────────────────────────────────────
+
+let STATE = { progress: {} };
+MODULES.forEach(m => {
+  STATE.progress[m.key] = { checklists:{}, reflections:{} };
+  m.sections.forEach(s => {
+    if (s.type === "checklist") STATE.progress[m.key].checklists[s.key] = s.items.map(()=>false);
+    if (s.type === "reflection") STATE.progress[m.key].reflections[s.key] = "";
+    if (s.type === "capstone") STATE.progress[m.key].reflections[s.key] = {
+      global_instruction:"", skill:"", claude_md:"", mcp:"", command:"", plugin:"", review_habit:"", weakest_d:""
+    };
+  });
+});
+
+let currentStep = 0;
+let db = null, viewerId = null, viewerName = "";
+let usingLocalFallback = false;
+let saveTimer = null;
+
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ── Persistence ───────────────────────────────────────────────────────────
+
+async function initIdentity() {
+  try {
+    const user = await claude.use("user");
+    if (user) {
+      const me = await user.me();
+      if (me && me.id) {
+        viewerId = me.id;
+        viewerName = me.name || "";
+      }
+    }
+  } catch(e) {}
+
+  db = await claude.use("db").catch(()=>null);
+
+  if (!viewerId || !db) {
+    usingLocalFallback = true;
+    try {
+      const saved = localStorage.getItem("scholar_fluency_progress");
+      if (saved) STATE.progress = Object.assign(STATE.progress, JSON.parse(saved));
+    } catch(e) {}
+    return;
+  }
+
+  try {
+    const snap = await db.doc("data/users/" + viewerId + "/progress").get();
+    if (snap.exists) {
+      const data = snap.data();
+      if (data.progress) STATE.progress = Object.assign(STATE.progress, data.progress);
+    }
+  } catch(e) {}
+}
+
+function scheduleSave() {
+  const el = document.getElementById("saveState");
+  if (el) el.textContent = "Saving…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doSave, 700);
+}
+
+async function doSave() {
+  const el = document.getElementById("saveState");
+  if (usingLocalFallback) {
+    try {
+      localStorage.setItem("scholar_fluency_progress", JSON.stringify(STATE.progress));
+      if (el) el.textContent = "Saved to this device " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+    } catch(e) { if (el) el.textContent = "Couldn't save locally"; }
+    return;
+  }
+  if (!db || !viewerId) return;
+  try {
+    await db.doc("data/users/" + viewerId + "/progress").set({ progress: STATE.progress, updatedAt: new Date().toISOString() });
+    if (el) el.textContent = "Saved " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  } catch(e) { if (el) el.textContent = "Couldn't save (working offline)"; }
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────
+
+function renderShell() {
+  const shell = document.getElementById("shell");
+  shell.innerHTML = renderTopbar() + renderRail() + renderModule(currentStep) + renderStepnav();
+  attachHandlers();
+}
+
+function renderTopbar() {
+  const who = viewerName ? esc(viewerName) : (usingLocalFallback ? "this device" : "you");
+  return `<div class="topbar">
+    <div class="brand"><span style="font-size:1.3em">🧭</span><div><div class="kicker">Claude Fluency for Scholars</div><div class="title">Engineer Walkthrough</div></div></div>
+    <div class="who">Progress saved for <b>${who}</b>${usingLocalFallback ? " (local to this device)" : ""}</div>
+  </div>`;
+}
+
+function moduleCompletion(m) {
+  const p = STATE.progress[m.key];
+  let total = 0, done = 0;
+  m.sections.forEach(s => {
+    if (s.type === "checklist") { total += s.items.length; done += p.checklists[s.key].filter(Boolean).length; }
+    if (s.type === "reflection") { total += 1; done += p.reflections[s.key] ? 1 : 0; }
+    if (s.type === "capstone") { total += 1; done += Object.values(p.reflections[s.key]).some(v=>v) ? 1 : 0; }
+  });
+  return total ? done/total : 0;
+}
+
+function renderRail() {
+  const steps = MODULES.map((m,i) => {
+    const pct = Math.round(moduleCompletion(m)*100);
+    return `<button class="rail-step ${i===currentStep?'current':''}" data-step="${i}" title="Module ${m.num}: ${esc(m.title)} — ${pct}%">
+      <div class="rail-fill" style="width:${pct}%"></div>
+    </button>`;
+  }).join("");
+  const labels = MODULES.map(m => `<span>M${m.num}</span>`).join("");
+  return `<div class="rail">${steps}</div><div class="modlabels">${labels}</div>`;
+}
+
+function renderModule(i) {
+  const m = MODULES[i];
+  const body = m.sections.map(s => renderSection(m.key, s)).join("");
+  return `<div class="card" data-modkey="${m.key}">
+    <div>
+      <div class="mod-eyebrow">Module ${m.num} of 4</div>
+      <div class="mod-title">${esc(m.title)}</div>
+      <div class="mod-meta"><span>${esc(m.format)}</span><span>Primary D's: <b>${esc(m.ds)}</b></span></div>
+    </div>
+    ${body}
+    <div class="actions"><span class="save-state" id="saveState"></span></div>
+  </div>`;
+}
+
+function renderSection(modKey, s) {
+  if (s.type === "html") {
+    return `<section class="block"><h3>${esc(s.title)}</h3>${s.html}</section>`;
+  }
+  if (s.type === "checklist") {
+    const state = STATE.progress[modKey].checklists[s.key];
+    const items = s.items.map((label, idx) => `
+      <div class="check-item ${state[idx]?'done':''}" data-check="${modKey}.${s.key}.${idx}" role="checkbox" aria-checked="${state[idx]?'true':'false'}" tabindex="0">
+        <span class="check-box">${state[idx]?'✓':''}</span>
+        <span class="label">${label}</span>
+      </div>`).join("");
+    return `<section class="block"><h3>${esc(s.title)}</h3><div class="checklist">${items}</div></section>`;
+  }
+  if (s.type === "reflection") {
+    const val = STATE.progress[modKey].reflections[s.key] || "";
+    return `<section class="block field-group">
+      <label class="field-label">${esc(s.title)}</label>
+      <div class="field-hint">${esc(s.hint)}</div>
+      <textarea rows="3" data-reflect="${modKey}.${s.key}" placeholder="${esc(s.placeholder||"")}">${esc(val)}</textarea>
+    </section>`;
+  }
+  if (s.type === "capstone") {
+    return renderCapstone(modKey, s);
+  }
+  return "";
+}
+
+const CAPSTONE_FIELDS = [
+  ["global_instruction","Global Instruction","What it says, and what behavior it changes"],
+  ["skill","Skill","What triggers it, what it does, what it never does"],
+  ["claude_md","CLAUDE.md","The conventions it captures"],
+  ["mcp","MCP connected","Which server, what it grants access to"],
+  ["command","Command","What it runs"],
+  ["plugin","Plugin","What's shared, what's explicitly excluded"],
+  ["review_habit","Review habit","When will you actually revisit each of these — a real trigger"],
+  ["weakest_d","Which D are you weakest on right now?","Honest is more useful than complete"],
+];
+
+function renderCapstone(modKey, s) {
+  const data = STATE.progress[modKey].reflections[s.key];
+  const fields = CAPSTONE_FIELDS.map(([key,label,hint]) => `
+    <div class="field-group">
+      <label class="field-label">${esc(label)}</label>
+      <div class="field-hint">${esc(hint)}</div>
+      <textarea rows="2" data-capstone="${key}" placeholder="">${esc(data[key]||"")}</textarea>
+    </div>`).join("");
+  return `<section class="block" data-capstone-section="${s.key}">
+    <h3>${esc(s.title)}</h3>
+    <p class="prose dim">Close the loop: write a one-page summary of everything you built, then export it.</p>
+    ${fields}
+    <div class="actions">
+      <button class="btn btn-primary" id="exportCapstone">Generate &amp; download MY_SETUP.md</button>
+      <button class="btn btn-ghost" id="previewCapstone">Preview</button>
+    </div>
+    <div class="preview" id="capstonePreview" hidden></div>
+  </section>`;
+}
+
+function renderStepnav() {
+  const m = MODULES[currentStep];
+  return `<div class="stepnav">
+    <button id="prevStep" ${currentStep===0?"disabled":""}>‹ Previous</button>
+    <span>Module ${m.num} of 4</span>
+    <button id="nextStep" ${currentStep===MODULES.length-1?"disabled":""}>Next ›</button>
+  </div>`;
+}
+
+// ── Handlers ──────────────────────────────────────────────────────────────
+
+function attachHandlers() {
+  const card = document.querySelector(".card");
+  if (card) {
+    const toggleCheck = (el) => {
+      const [modKey, secKey, idx] = el.getAttribute("data-check").split(".");
+      const arr = STATE.progress[modKey].checklists[secKey];
+      arr[idx] = !arr[idx];
+      renderShell();
+      scheduleSave();
+    };
+    card.addEventListener("click", e => {
+      const checkEl = e.target.closest("[data-check]");
+      if (checkEl) { toggleCheck(checkEl); return; }
+      if (e.target.id === "exportCapstone") { doExportCapstone(); return; }
+      if (e.target.id === "previewCapstone") {
+        const box = document.getElementById("capstonePreview");
+        box.textContent = buildCapstoneMarkdown();
+        box.hidden = false;
+        return;
+      }
+    });
+    card.addEventListener("keydown", e => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const checkEl = e.target.closest("[data-check]");
+      if (checkEl) { e.preventDefault(); toggleCheck(checkEl); }
+    });
+    card.addEventListener("input", e => {
+      const reflectPath = e.target.getAttribute("data-reflect");
+      if (reflectPath) {
+        const [modKey, secKey] = reflectPath.split(".");
+        STATE.progress[modKey].reflections[secKey] = e.target.value;
+        scheduleSave();
+        return;
+      }
+      const capKey = e.target.getAttribute("data-capstone");
+      if (capKey) {
+        STATE.progress.m4.reflections.capstone[capKey] = e.target.value;
+        scheduleSave();
+        return;
+      }
+    });
+  }
+  document.querySelectorAll(".rail-step").forEach(btn => {
+    btn.addEventListener("click", () => { currentStep = Number(btn.getAttribute("data-step")); renderShell(); });
+  });
+  const prev = document.getElementById("prevStep");
+  const next = document.getElementById("nextStep");
+  if (prev) prev.addEventListener("click", () => { currentStep = Math.max(0, currentStep-1); renderShell(); });
+  if (next) next.addEventListener("click", () => { currentStep = Math.min(MODULES.length-1, currentStep+1); renderShell(); });
+}
+
+function buildCapstoneMarkdown() {
+  const d = STATE.progress.m4.reflections.capstone;
+  const who = viewerName || "Scholar";
+  return `# My Claude Code Setup\n\nBuilt by ${who} · Claude Fluency for Scholars\n\n` +
+    `## Global Instruction\n${d.global_instruction||"_(not yet answered)_"}\n\n` +
+    `## Skill\n${d.skill||"_(not yet answered)_"}\n\n` +
+    `## CLAUDE.md\n${d.claude_md||"_(not yet answered)_"}\n\n` +
+    `## MCP connected\n${d.mcp||"_(not yet answered)_"}\n\n` +
+    `## Command\n${d.command||"_(not yet answered)_"}\n\n` +
+    `## Plugin\n${d.plugin||"_(not yet answered)_"}\n\n` +
+    `## Review habit\n${d.review_habit||"_(not yet answered)_"}\n\n` +
+    `## Which D am I weakest on right now?\n${d.weakest_d||"_(not yet answered)_"}\n`;
+}
+
+async function doExportCapstone() {
+  const content = buildCapstoneMarkdown();
+  const downloads = await claude.use("downloads").catch(()=>null);
+  if (!downloads) {
+    const box = document.getElementById("capstonePreview");
+    box.textContent = "Downloads aren't available here — copy this:\n\n" + content;
+    box.hidden = false;
+    return;
+  }
+  try { await downloads.save({ filename: "MY_SETUP.md", data: content }); } catch(e) {}
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+
+async function boot() {
+  await initIdentity();
+  renderShell();
+}
+boot();
+
+})();
+</script>
