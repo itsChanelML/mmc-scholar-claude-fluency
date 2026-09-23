@@ -1,0 +1,287 @@
+<title>Claude Fluency for Scholars</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:          #F5F2EA;
+    --surface:     #FFFFFF;
+    --surface-2:   #ECE6D8;
+    --text:        #1C1E22;
+    --text-dim:    #5B6472;
+    --border:      #DCD3BE;
+    --accent:      #0E8C7F;
+    --accent-ink:  #FFFFFF;
+    --accent-soft: #D8EFE9;
+    --success:     #1F9D55;
+    --retry:       #B5790A;
+    --escalate:    #C23B4B;
+    --code-bg:     #FBF9F3;
+    --shadow: 0 1px 2px rgba(28,30,34,.06), 0 8px 24px rgba(28,30,34,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:          #11151C;
+      --surface:     #1B212B;
+      --surface-2:   #222939;
+      --text:        #EDEAE3;
+      --text-dim:    #8B93A1;
+      --border:      #2B3342;
+      --accent:      #56E0C9;
+      --accent-ink:  #08201C;
+      --accent-soft: #123B37;
+      --success:     #6EE7A8;
+      --retry:       #FBBF6B;
+      --escalate:    #FB7185;
+      --code-bg:     #161B24;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:          #11151C;
+    --surface:     #1B212B;
+    --surface-2:   #222939;
+    --text:        #EDEAE3;
+    --text-dim:    #8B93A1;
+    --border:      #2B3342;
+    --accent:      #56E0C9;
+    --accent-ink:  #08201C;
+    --accent-soft: #123B37;
+    --success:     #6EE7A8;
+    --retry:       #FBBF6B;
+    --escalate:    #FB7185;
+    --code-bg:     #161B24;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    overflow: hidden;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", monospace; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+  #deck { position: relative; height: 100vh; width: 100%; }
+  .slide {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    padding: clamp(20px, 5vw, 64px) clamp(20px, 6vw, 96px);
+    padding-block: clamp(56px, 8vh, 96px);
+  }
+  .slide[hidden] { display: none; }
+
+  .kicker { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 14px; }
+  .slide-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; max-width: 1040px; }
+  .slide-num { position: absolute; right: clamp(20px, 6vw, 96px); bottom: 20px; font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+  .nav { position: fixed; left: 0; right: 0; bottom: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); border: none; padding: 0; cursor: pointer; }
+  .dot[aria-current="true"] { background: var(--accent); width: 20px; border-radius: 4px; }
+  .arrow {
+    position: fixed; top: 50%; transform: translateY(-50%); background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; box-shadow: var(--shadow); font-size: 16px;
+  }
+  .arrow:focus-visible, .dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .arrow.prev { left: 16px; } .arrow.next { right: 16px; }
+  .arrow[disabled] { opacity: .3; cursor: default; }
+
+  .display   { font-size: clamp(32px, 4.8vw, 58px); font-weight: 700; line-height: 1.08; letter-spacing: -.01em; }
+  .h2        { font-size: clamp(22px, 3.1vw, 34px); font-weight: 700; line-height: 1.18; }
+  .lede      { font-size: clamp(15px, 1.9vw, 19px); color: var(--text-dim); line-height: 1.5; max-width: 64ch; }
+  .body-text { font-size: clamp(14.5px, 1.5vw, 17px); line-height: 1.6; max-width: 66ch; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; font-weight: 600; letter-spacing: .04em; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--text-dim); width: fit-content;
+  }
+  code { font-family: "IBM Plex Mono", monospace; background: var(--surface-2); padding: .1em .4em; border-radius: 5px; font-size: .88em; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  @media (max-width: 900px) { .grid2, .grid4 { grid-template-columns: 1fr; } }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .card h3 { font-size: 15px; margin-bottom: 6px; }
+  .card p  { margin: 0; color: var(--text-dim); font-size: 13px; line-height: 1.5; }
+  .card .tag { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; display: block; }
+
+  table.dtable { border-collapse: collapse; width: 100%; }
+  table.dtable td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+  table.dtable td:first-child { font-family: "IBM Plex Mono", monospace; color: var(--accent); font-weight: 600; width: 130px; }
+  table.dtable td:last-child { color: var(--text-dim); font-size: 12.5px; width: 220px; }
+
+  .roadmap-row { display: grid; grid-template-columns: 140px 1fr 1fr; gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .roadmap-row:last-child { border-bottom: none; }
+  .roadmap-tier { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 13px; }
+  .roadmap-row .example { font-size: 13px; color: var(--text-dim); }
+  .roadmap-row .feature { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent); }
+  @media (max-width: 720px) { .roadmap-row { grid-template-columns: 1fr; gap: 4px; } }
+
+  .step-num {
+    font-family: "IBM Plex Mono", monospace; font-size: clamp(46px, 8vw, 90px); font-weight: 600;
+    line-height: 1; -webkit-text-stroke: 1.5px var(--accent); color: transparent;
+  }
+</style>
+
+<div id="deck" role="group" aria-roledescription="slide deck"></div>
+
+<div class="nav" id="dots"></div>
+<button class="arrow prev mono" id="prevBtn" aria-label="Previous slide">‹</button>
+<button class="arrow next mono" id="nextBtn" aria-label="Next slide">›</button>
+
+<script>
+(function(){
+
+const slides = [
+
+{ kicker: "Mentor Me Collective · Global Scholars", body: `
+  <div class="slide-body">
+    <div class="display">Claude Fluency<br>for Scholars</div>
+    <div class="lede">A 4-module curriculum. By the end, you're fully set
+    up with Claude Code — Global Instructions, Skills, MCP, Commands, and
+    Plugins, all built by you.</div>
+    <div class="pill" style="margin-top:8px">4 MODULES · HANDS-ON</div>
+  </div>` },
+
+{ kicker: "The vocabulary", body: `
+  <div class="slide-body">
+    <div class="h2">Anthropic's 4D Framework</div>
+    <div class="body-text">The judgment calls you'll make all curriculum —
+    named, so you can talk about them.</div>
+    <table class="dtable mono">
+      <tr><td>Delegation</td><td class="body-text" style="font-family:'IBM Plex Sans'">What am I handing off, and what do I keep control of?</td><td>Module 2, 3</td></tr>
+      <tr><td>Description</td><td class="body-text" style="font-family:'IBM Plex Sans'">Have I given Claude enough real context to succeed?</td><td>Module 1</td></tr>
+      <tr><td>Discernment</td><td class="body-text" style="font-family:'IBM Plex Sans'">Do I actually believe this output is correct?</td><td>Module 2</td></tr>
+      <tr><td>Diligence</td><td class="body-text" style="font-family:'IBM Plex Sans'">Am I accountable for what happens next?</td><td>Module 3, 4</td></tr>
+    </table>
+  </div>` },
+
+{ kicker: "The roadmap", body: `
+  <div class="slide-body">
+    <div class="h2">Automation → Augmentation → Agents</div>
+    <div class="body-text">How much judgment does a task actually need —
+    and which Claude Code feature matches that.</div>
+    <div class="roadmap-row">
+      <div class="roadmap-tier">AUTOMATION</div>
+      <div class="example">Same steps, every time — a deploy script, a lint check you run identically every week</div>
+      <div class="feature">→ Commands</div>
+    </div>
+    <div class="roadmap-row">
+      <div class="roadmap-tier">AUGMENTATION</div>
+      <div class="example">You're still driving — pasting a stack trace and asking what's wrong</div>
+      <div class="feature">→ Global Instructions</div>
+    </div>
+    <div class="roadmap-row">
+      <div class="roadmap-tier">AGENTS</div>
+      <div class="example">"Here's a ticket, go implement it" — Claude plans and executes, checking in at boundaries</div>
+      <div class="feature">→ Skills + MCP</div>
+    </div>
+  </div>` },
+
+{ kicker: "Four sessions", body: `
+  <div class="slide-body">
+    <div class="h2">The path</div>
+    <div class="grid4">
+      <div class="card"><span class="tag">Module 1</span><h3>Foundations & Setup</h3><p>4D's, the roadmap, install Claude Code, your first Global Instruction.</p></div>
+      <div class="card"><span class="tag">Module 2</span><h3>Skills & CLAUDE.md</h3><p>Build a real Skill. Write your repo's first CLAUDE.md.</p></div>
+      <div class="card"><span class="tag">Module 3</span><h3>Leveraging MCPs</h3><p>Connect Claude to a real external system. Name a judgment boundary.</p></div>
+      <div class="card"><span class="tag">Module 4</span><h3>Plugins & Capstone</h3><p>A Command, a Plugin, and your own setup, documented.</p></div>
+    </div>
+  </div>` },
+
+{ kicker: "Module 1 · ~60 min", body: `
+  <div class="slide-body">
+    <div class="step-num mono">01</div>
+    <div class="h2">Foundations & Setup</div>
+    <div class="body-text">The 4D's and the roadmap, then Claude Code
+    installed and authenticated. Close with your first Global
+    Instruction — and feel the actual behavior change it causes.</div>
+  </div>` },
+
+{ kicker: "Module 2 · ~75 min", body: `
+  <div class="slide-body">
+    <div class="step-num mono">02</div>
+    <div class="h2">Skills & CLAUDE.md</div>
+    <div class="body-text">Direct Claude Code to build a Skill for a real
+    recurring task — a mentor check-in note — then judge its output like
+    a mentor would, not like a test passing.</div>
+    <div class="body-text">Then: your repo's first CLAUDE.md, and proof
+    that a fresh session actually follows it.</div>
+  </div>` },
+
+{ kicker: "Module 3 · ~75 min", body: `
+  <div class="slide-body">
+    <div class="step-num mono">03</div>
+    <div class="h2">Leveraging MCPs</div>
+    <div class="body-text">Connect Claude to a real system outside this
+    repo. Use it on a real task. Then the part that actually matters:
+    naming, specifically, what you'd want gated behind your review —
+    before it happens, not after.</div>
+  </div>` },
+
+{ kicker: "Module 4 · ~75 min", body: `
+  <div class="slide-body">
+    <div class="step-num mono">04</div>
+    <div class="h2">Plugins, Commands & Capstone</div>
+    <div class="body-text">Turn your Skill into a Command. Bundle it into
+    a Plugin — sharing your reasoning, never your data. Close with a
+    one-page summary of your own setup and a real review habit.</div>
+  </div>` },
+
+{ kicker: "Before you go", body: `
+  <div class="slide-body">
+    <div class="display" style="font-size:clamp(26px,3.6vw,42px)">Not a folder of AI tips.<br>A vocabulary and a map.</div>
+    <div class="body-text" style="margin-top:6px">The 4D's and the
+    Automation/Augmentation/Agents roadmap are what's still useful the
+    day something you weren't trained on shows up.</div>
+    <div class="pill" style="margin-top:14px">CHANEL POWER · MENTOR ME COLLECTIVE</div>
+  </div>` },
+];
+
+const deck = document.getElementById('deck');
+const dotsEl = document.getElementById('dots');
+let current = 0;
+
+slides.forEach((s, i) => {
+  const el = document.createElement('section');
+  el.className = 'slide';
+  el.id = 'slide-' + i;
+  if (i !== 0) el.hidden = true;
+  el.innerHTML = `<div class="kicker">${s.kicker}</div>${s.body}<div class="slide-num mono">${String(i+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}</div>`;
+  deck.appendChild(el);
+
+  const dot = document.createElement('button');
+  dot.className = 'dot';
+  dot.setAttribute('aria-label', 'Go to slide ' + (i+1));
+  dot.setAttribute('aria-current', i === 0 ? 'true' : 'false');
+  dot.addEventListener('click', () => goTo(i));
+  dotsEl.appendChild(dot);
+});
+
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function goTo(i) {
+  if (i < 0 || i >= slides.length) return;
+  document.getElementById('slide-' + current).hidden = true;
+  dotsEl.children[current].setAttribute('aria-current', 'false');
+  current = i;
+  document.getElementById('slide-' + current).hidden = false;
+  dotsEl.children[current].setAttribute('aria-current', 'true');
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === slides.length - 1;
+}
+
+prevBtn.addEventListener('click', () => goTo(current - 1));
+nextBtn.addEventListener('click', () => goTo(current + 1));
+prevBtn.disabled = true;
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { goTo(current + 1); }
+  if (e.key === 'ArrowLeft') { goTo(current - 1); }
+});
+})();
+</script>

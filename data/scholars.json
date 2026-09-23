@@ -1,0 +1,20 @@
+[
+  {"id": "s001", "name": "Aaliyah Brooks", "cohort": "2025-fall", "mentor": "Dana Whitfield", "joined": "2025-09-08",
+   "milestones_completed": ["orientation", "resume_workshop", "mock_interview", "technical_project", "capstone_presentation"]},
+  {"id": "s002", "name": "Devon Ruiz", "cohort": "2025-fall", "mentor": "Dana Whitfield", "joined": "2025-09-08",
+   "milestones_completed": ["orientation", "resume_workshop", "mock_interview"]},
+  {"id": "s003", "name": "Keisha Wallace", "cohort": "2025-fall", "mentor": "Marcus Lee", "joined": "2025-09-08",
+   "milestones_completed": ["orientation", "resume_workshop"]},
+  {"id": "s004", "name": "Noah Kim", "cohort": "2025-fall", "mentor": "Marcus Lee", "joined": "2025-09-15",
+   "milestones_completed": ["orientation"]},
+  {"id": "s005", "name": "Sofia Alvarez", "cohort": "2025-fall", "mentor": "Priya Anand", "joined": "2025-09-15",
+   "milestones_completed": ["orientation", "resume_workshop", "mock_interview", "technical_project"]},
+  {"id": "s006", "name": "Tyrell Jackson", "cohort": "2026-spring", "mentor": "Dana Whitfield", "joined": "2026-01-12",
+   "milestones_completed": ["orientation"]},
+  {"id": "s007", "name": "Grace Huang", "cohort": "2026-spring", "mentor": "Marcus Lee", "joined": "2026-01-12",
+   "milestones_completed": ["orientation", "resume_workshop"]},
+  {"id": "s008", "name": "Malik Osei", "cohort": "2026-spring", "mentor": "Priya Anand", "joined": "2026-01-19",
+   "milestones_completed": []},
+  {"id": "s009", "name": "Renee Park", "cohort": "2026-spring", "mentor": "Priya Anand", "joined": "2026-01-19",
+   "milestones_completed": ["orientation", "resume_workshop", "mock_interview"]}
+]
